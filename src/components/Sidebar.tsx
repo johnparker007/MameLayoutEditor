@@ -5,10 +5,22 @@ import { useLayoutStore } from "../state/layoutStore";
 
 export const Sidebar = () => {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const { filename, rawXml, setFile } = useLayoutStore((state) => ({
+  const {
+    filename,
+    rawXml,
+    project,
+    setFile,
+    createNewProject,
+    addLamp,
+    exportLay,
+  } = useLayoutStore((state) => ({
     filename: state.filename,
     rawXml: state.rawXml,
+    project: state.project,
     setFile: state.setFile,
+    createNewProject: state.createNewProject,
+    addLamp: state.addLamp,
+    exportLay: state.exportLay,
   }));
 
   const handleOpenClick = () => {
@@ -25,11 +37,12 @@ export const Sidebar = () => {
     event.target.value = "";
   };
 
-  const handleSave = () => {
-    if (!rawXml) {
+  const handleExport = () => {
+    const xml = exportLay();
+    if (!xml) {
       return;
     }
-    const blob = new Blob([rawXml], { type: "application/xml" });
+    const blob = new Blob([xml], { type: "application/xml" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
@@ -45,6 +58,13 @@ export const Sidebar = () => {
       <div className="space-y-2">
         <button
           type="button"
+          onClick={createNewProject}
+          className="w-full rounded-md bg-emerald-500 px-3 py-2 text-sm font-semibold text-slate-950 hover:bg-emerald-400"
+        >
+          New project
+        </button>
+        <button
+          type="button"
           onClick={handleOpenClick}
           className="w-full rounded-md bg-indigo-500 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-400"
         >
@@ -52,11 +72,19 @@ export const Sidebar = () => {
         </button>
         <button
           type="button"
-          onClick={handleSave}
-          disabled={!rawXml}
+          onClick={addLamp}
+          disabled={!project}
           className="w-full rounded-md border border-slate-700 px-3 py-2 text-sm font-semibold text-slate-200 hover:border-slate-500 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          Save .lay
+          Add lamp
+        </button>
+        <button
+          type="button"
+          onClick={handleExport}
+          disabled={!project && !rawXml}
+          className="w-full rounded-md border border-slate-700 px-3 py-2 text-sm font-semibold text-slate-200 hover:border-slate-500 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          Export .lay
         </button>
         <input
           ref={fileInputRef}

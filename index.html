@@ -7,6 +7,16 @@
   </head>
   <body class="min-h-screen bg-slate-950 text-slate-100">
     <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
+    <script type="module">
+      const root = document.getElementById("root");
+      if (window.location.protocol === "file:") {
+        if (root) {
+          root.innerHTML =
+            '<div style="padding:16px;font-family:Inter,system-ui,sans-serif;color:#e2e8f0;background:#0f172a;border:1px dashed #334155;border-radius:8px;margin:24px;">Run the editor with the Vite dev server (e.g. <code style="color:#a5b4fc;">npm run dev</code>) instead of opening index.html directly.</div>';
+        }
+      } else {
+        import("/src/main.tsx");
+      }
+    </script>
   </body>
 </html>

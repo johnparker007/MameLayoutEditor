@@ -1,5 +1,9 @@
 # MAME Layout Editor
 
+
+No setup link: https://johnparker007.github.io/MameLayoutEditor/
+
+
 A minimal, runnable web app scaffold for building a MAME `.lay` layout editor. This project focuses on the foundation only: Vite + React + TypeScript, routing, state management, and a lightweight UI shell.
 
 ## Getting started

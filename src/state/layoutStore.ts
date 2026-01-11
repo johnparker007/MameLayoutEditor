@@ -13,6 +13,7 @@ type LayoutState = {
   clearFile: () => void;
   createNewProject: () => void;
   addLamp: () => void;
+  addLamps: (lamps: Lamp[]) => void;
   setSelectedLamps: (ids: string[], primaryId?: string | null) => void;
   deleteLamps: (ids: string[]) => void;
   bringLampToFront: (id: string) => void;
@@ -70,6 +71,20 @@ export const useLayoutStore = create<LayoutState>((set, get) => ({
       },
       selectedLampIds: [lamp.id],
       primarySelectedLampId: lamp.id,
+    });
+  },
+  addLamps: (lamps) => {
+    const { project } = get();
+    if (!project || lamps.length === 0) {
+      return;
+    }
+    set({
+      project: {
+        ...project,
+        lamps: [...project.lamps, ...lamps],
+      },
+      selectedLampIds: lamps.map((lamp) => lamp.id),
+      primarySelectedLampId: lamps[0]?.id ?? null,
     });
   },
   setSelectedLamps: (ids, primaryId = ids[0] ?? null) =>

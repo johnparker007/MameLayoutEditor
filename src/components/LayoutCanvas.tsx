@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { MouseEvent, PointerEvent } from "react";
 import type { Lamp } from "../lay/types";
 import { useLayoutStore } from "../state/layoutStore";
@@ -25,6 +25,7 @@ export const LayoutCanvas = () => {
     primarySelectedLampId,
     setSelectedLamps,
     addLamp,
+    deleteLamps,
     bringLampToFront,
     sendLampToBack,
     updateLampPosition,
@@ -35,6 +36,7 @@ export const LayoutCanvas = () => {
     primarySelectedLampId: state.primarySelectedLampId,
     setSelectedLamps: state.setSelectedLamps,
     addLamp: state.addLamp,
+    deleteLamps: state.deleteLamps,
     bringLampToFront: state.bringLampToFront,
     sendLampToBack: state.sendLampToBack,
     updateLampPosition: state.updateLampPosition,
@@ -71,14 +73,6 @@ export const LayoutCanvas = () => {
     return map;
   }, [project]);
 
-  if (!project) {
-    return (
-      <div className="flex h-full items-center justify-center rounded-md border border-dashed border-slate-700 text-sm text-slate-500">
-        Create a new project or open a .lay file to start.
-      </div>
-    );
-  }
-
   const getCanvasPoint = (event: PointerEvent<HTMLDivElement>) => {
     const bounds = containerRef.current?.getBoundingClientRect();
     const scrollLeft = containerRef.current?.scrollLeft ?? 0;
@@ -93,6 +87,40 @@ export const LayoutCanvas = () => {
     const deduped = Array.from(new Set(ids));
     setSelectedLamps(deduped, primaryId ?? deduped[0] ?? null);
   };
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Delete") {
+        return;
+      }
+      const target = event.target;
+      if (
+        target instanceof HTMLElement &&
+        (target.isContentEditable ||
+          target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.tagName === "SELECT")
+      ) {
+        return;
+      }
+      if (selectedLampIds.length === 0) {
+        return;
+      }
+      event.preventDefault();
+      deleteLamps(selectedLampIds);
+      setContextMenu((prev) => (prev.isOpen ? { ...prev, isOpen: false } : prev));
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [deleteLamps, selectedLampIds]);
+
+  if (!project) {
+    return (
+      <div className="flex h-full items-center justify-center rounded-md border border-dashed border-slate-700 text-sm text-slate-500">
+        Create a new project or open a .lay file to start.
+      </div>
+    );
+  }
 
   const handleLampPointerDown = (
     event: PointerEvent<HTMLDivElement>,
@@ -274,6 +302,14 @@ export const LayoutCanvas = () => {
     setContextMenu((prev) => (prev.isOpen ? { ...prev, isOpen: false } : prev));
   };
 
+  const handleDeleteSelected = () => {
+    if (selectedLampIds.length === 0) {
+      return;
+    }
+    deleteLamps(selectedLampIds);
+    setContextMenu((prev) => (prev.isOpen ? { ...prev, isOpen: false } : prev));
+  };
+
   return (
     <div
       ref={containerRef}
@@ -370,6 +406,19 @@ export const LayoutCanvas = () => {
               disabled={!primarySelectedLampId}
             >
               Send To Back
+            </button>
+          </div>
+          <div className="mt-2 px-2 py-1 text-xs font-semibold uppercase tracking-wide text-slate-400">
+            Edit
+          </div>
+          <div className="ml-2 rounded-md border border-slate-800 bg-slate-950">
+            <button
+              type="button"
+              className="w-full px-3 py-2 text-left text-sm text-slate-200 hover:bg-slate-800 disabled:cursor-not-allowed disabled:text-slate-600 disabled:hover:bg-transparent"
+              onClick={handleDeleteSelected}
+              disabled={selectedLampIds.length === 0}
+            >
+              Delete
             </button>
           </div>
         </div>

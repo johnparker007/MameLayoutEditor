@@ -3,24 +3,31 @@ import type { ChangeEvent } from "react";
 import { useRef } from "react";
 import { useLayoutStore } from "../state/layoutStore";
 
+const ensureLayExtension = (name: string) =>
+  name.toLowerCase().endsWith(".lay") ? name : `${name}.lay`;
+
 export const Sidebar = () => {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const {
     filename,
     rawXml,
     project,
+    exportFileHandle,
     setFile,
     createNewProject,
     addLamp,
     exportLay,
+    setExportFileHandle,
   } = useLayoutStore((state) => ({
     filename: state.filename,
     rawXml: state.rawXml,
     project: state.project,
+    exportFileHandle: state.exportFileHandle,
     setFile: state.setFile,
     createNewProject: state.createNewProject,
     addLamp: state.addLamp,
     exportLay: state.exportLay,
+    setExportFileHandle: state.setExportFileHandle,
   }));
 
   const handleOpenClick = () => {
@@ -37,20 +44,85 @@ export const Sidebar = () => {
     event.target.value = "";
   };
 
-  const handleExport = () => {
+  const writeExport = async (
+    handle: FileSystemFileHandle,
+    xml: string
+  ): Promise<void> => {
+    const writable = await handle.createWritable();
+    await writable.write(xml);
+    await writable.close();
+  };
+
+  const requestExportHandle = async (
+    xml: string
+  ): Promise<FileSystemFileHandle | null> => {
+    if (!("showSaveFilePicker" in window)) {
+      return null;
+    }
+    const suggestedName = ensureLayExtension(filename ?? "layout.lay");
+    const handle = await window.showSaveFilePicker({
+      suggestedName,
+      types: [
+        {
+          description: "MAME layout",
+          accept: { "application/xml": [".lay"] },
+        },
+      ],
+    });
+    if (handle.name.toLowerCase().endsWith(".lay")) {
+      await writeExport(handle, xml);
+      return handle;
+    }
+    const normalizedHandle = await window.showSaveFilePicker({
+      suggestedName: ensureLayExtension(handle.name),
+      types: [
+        {
+          description: "MAME layout",
+          accept: { "application/xml": [".lay"] },
+        },
+      ],
+    });
+    await writeExport(normalizedHandle, xml);
+    return normalizedHandle;
+  };
+
+  const handleExport = async () => {
     const xml = exportLay();
     if (!xml) {
+      return;
+    }
+    if (exportFileHandle) {
+      await writeExport(exportFileHandle, xml);
       return;
     }
     const blob = new Blob([xml], { type: "application/xml" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = filename ?? "layout.lay";
+    link.download = ensureLayExtension(filename ?? "layout.lay");
     document.body.appendChild(link);
     link.click();
     link.remove();
     URL.revokeObjectURL(url);
+  };
+
+  const handleExportAs = async () => {
+    const xml = exportLay();
+    if (!xml) {
+      return;
+    }
+    try {
+      const handle = await requestExportHandle(xml);
+      if (!handle) {
+        return;
+      }
+      setExportFileHandle(handle);
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") {
+        return;
+      }
+      throw error;
+    }
   };
 
   return (
@@ -85,6 +157,14 @@ export const Sidebar = () => {
           className="w-full rounded-md border border-slate-700 px-3 py-2 text-sm font-semibold text-slate-200 hover:border-slate-500 disabled:cursor-not-allowed disabled:opacity-50"
         >
           Export .lay
+        </button>
+        <button
+          type="button"
+          onClick={handleExportAs}
+          disabled={!project && !rawXml}
+          className="w-full rounded-md border border-slate-700 px-3 py-2 text-sm font-semibold text-slate-200 hover:border-slate-500 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          Export .lay as...
         </button>
         <input
           ref={fileInputRef}

@@ -6,13 +6,14 @@ type LayoutState = {
   filename: string | null;
   rawXml: string | null;
   project: LayoutProject | null;
-  selectedLampId: string | null;
+  selectedLampIds: string[];
+  primarySelectedLampId: string | null;
   exportFileHandle: FileSystemFileHandle | null;
   setFile: (filename: string, rawXml: string) => void;
   clearFile: () => void;
   createNewProject: () => void;
   addLamp: () => void;
-  selectLamp: (id: string | null) => void;
+  setSelectedLamps: (ids: string[], primaryId?: string | null) => void;
   bringLampToFront: (id: string) => void;
   sendLampToBack: (id: string) => void;
   updateLamp: (id: string, updates: Partial<Lamp>) => void;
@@ -27,14 +28,16 @@ export const useLayoutStore = create<LayoutState>((set, get) => ({
   filename: null,
   rawXml: null,
   project: null,
-  selectedLampId: null,
+  selectedLampIds: [],
+  primarySelectedLampId: null,
   exportFileHandle: null,
   setFile: (filename, rawXml) =>
     set({
       filename,
       rawXml,
       project: parseLay(rawXml),
-      selectedLampId: null,
+      selectedLampIds: [],
+      primarySelectedLampId: null,
       exportFileHandle: null,
     }),
   clearFile: () =>
@@ -42,7 +45,8 @@ export const useLayoutStore = create<LayoutState>((set, get) => ({
       filename: null,
       rawXml: null,
       project: null,
-      selectedLampId: null,
+      selectedLampIds: [],
+      primarySelectedLampId: null,
       exportFileHandle: null,
     }),
   createNewProject: () =>
@@ -50,7 +54,8 @@ export const useLayoutStore = create<LayoutState>((set, get) => ({
       filename: "untitled.lay",
       rawXml: null,
       project: createEmptyProject(),
-      selectedLampId: null,
+      selectedLampIds: [],
+      primarySelectedLampId: null,
       exportFileHandle: null,
     }),
   addLamp: () => {
@@ -62,10 +67,15 @@ export const useLayoutStore = create<LayoutState>((set, get) => ({
         ...nextProject,
         lamps: [...nextProject.lamps, lamp],
       },
-      selectedLampId: lamp.id,
+      selectedLampIds: [lamp.id],
+      primarySelectedLampId: lamp.id,
     });
   },
-  selectLamp: (id) => set({ selectedLampId: id }),
+  setSelectedLamps: (ids, primaryId = ids[0] ?? null) =>
+    set({
+      selectedLampIds: ids,
+      primarySelectedLampId: primaryId,
+    }),
   bringLampToFront: (id) => {
     const { project } = get();
     if (!project) {

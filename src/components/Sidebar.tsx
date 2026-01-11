@@ -95,15 +95,18 @@ export const Sidebar = () => {
       await writeExport(exportFileHandle, xml);
       return;
     }
-    const blob = new Blob([xml], { type: "application/xml" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = ensureLayExtension(filename ?? "layout.lay");
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    URL.revokeObjectURL(url);
+    try {
+      const handle = await requestExportHandle(xml);
+      if (!handle) {
+        return;
+      }
+      setExportFileHandle(handle);
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") {
+        return;
+      }
+      throw error;
+    }
   };
 
   const handleExportAs = async () => {

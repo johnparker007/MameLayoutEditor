@@ -25,6 +25,7 @@ export const LayoutCanvas = () => {
     primarySelectedLampId,
     setSelectedLamps,
     addLamp,
+    addLamps,
     deleteLamps,
     bringLampToFront,
     sendLampToBack,
@@ -36,6 +37,7 @@ export const LayoutCanvas = () => {
     primarySelectedLampId: state.primarySelectedLampId,
     setSelectedLamps: state.setSelectedLamps,
     addLamp: state.addLamp,
+    addLamps: state.addLamps,
     deleteLamps: state.deleteLamps,
     bringLampToFront: state.bringLampToFront,
     sendLampToBack: state.sendLampToBack,
@@ -45,6 +47,8 @@ export const LayoutCanvas = () => {
 
   const dragState = useRef<DragState | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const [clipboard, setClipboard] = useState<Lamp[]>([]);
+  const pasteCountRef = useRef(0);
   const selectionState = useRef<{
     startX: number;
     startY: number;
@@ -88,31 +92,95 @@ export const LayoutCanvas = () => {
     setSelectedLamps(deduped, primaryId ?? deduped[0] ?? null);
   };
 
+  const isEditableTarget = (target: EventTarget | null) =>
+    target instanceof HTMLElement &&
+    (target.isContentEditable ||
+      target.tagName === "INPUT" ||
+      target.tagName === "TEXTAREA" ||
+      target.tagName === "SELECT");
+
+  const copySelectedLamps = () => {
+    if (!project || selectedLampIds.length === 0) {
+      return;
+    }
+    const selected = project.lamps.filter((lamp) => selectedLampIds.includes(lamp.id));
+    setClipboard(
+      selected.map((lamp) => ({
+        ...lamp,
+        onColor: { ...lamp.onColor },
+        offColor: { ...lamp.offColor },
+      }))
+    );
+    pasteCountRef.current = 0;
+  };
+
+  const pasteClipboardLamps = () => {
+    if (!project || clipboard.length === 0) {
+      return;
+    }
+    const offset = 16 * (pasteCountRef.current + 1);
+    pasteCountRef.current += 1;
+    const nonce = `${Date.now()}-${Math.round(Math.random() * 1_000_000)}`;
+    const nextLamps = clipboard.map((lamp, index) => ({
+      ...lamp,
+      id: `lamp-${nonce}-${index}`,
+      name: `${lamp.name} Copy`,
+      x: lamp.x + offset,
+      y: lamp.y + offset,
+    }));
+    addLamps(nextLamps);
+    setContextMenu((prev) => (prev.isOpen ? { ...prev, isOpen: false } : prev));
+  };
+
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key !== "Delete") {
-        return;
-      }
       const target = event.target;
-      if (
-        target instanceof HTMLElement &&
-        (target.isContentEditable ||
-          target.tagName === "INPUT" ||
-          target.tagName === "TEXTAREA" ||
-          target.tagName === "SELECT")
-      ) {
+      if (isEditableTarget(target)) {
         return;
       }
-      if (selectedLampIds.length === 0) {
+      if (event.key === "Delete") {
+        if (selectedLampIds.length === 0) {
+          return;
+        }
+        event.preventDefault();
+        deleteLamps(selectedLampIds);
+        setContextMenu((prev) => (prev.isOpen ? { ...prev, isOpen: false } : prev));
         return;
       }
-      event.preventDefault();
-      deleteLamps(selectedLampIds);
-      setContextMenu((prev) => (prev.isOpen ? { ...prev, isOpen: false } : prev));
+      const isModifierPressed = event.ctrlKey || event.metaKey;
+      if (!isModifierPressed) {
+        return;
+      }
+      const key = event.key.toLowerCase();
+      if (key === "c") {
+        if (selectedLampIds.length === 0) {
+          return;
+        }
+        event.preventDefault();
+        copySelectedLamps();
+        return;
+      }
+      if (key === "x") {
+        if (selectedLampIds.length === 0) {
+          return;
+        }
+        event.preventDefault();
+        copySelectedLamps();
+        deleteLamps(selectedLampIds);
+        setContextMenu((prev) => (prev.isOpen ? { ...prev, isOpen: false } : prev));
+        return;
+      }
+      if (key === "v") {
+        if (clipboard.length === 0) {
+          return;
+        }
+        event.preventDefault();
+        pasteClipboardLamps();
+      }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [deleteLamps, selectedLampIds]);
+  }, [deleteLamps, selectedLampIds, project, addLamps, clipboard]);
 
   if (!project) {
     return (
@@ -310,6 +378,30 @@ export const LayoutCanvas = () => {
     setContextMenu((prev) => (prev.isOpen ? { ...prev, isOpen: false } : prev));
   };
 
+  const handleCopySelected = () => {
+    if (selectedLampIds.length === 0) {
+      return;
+    }
+    copySelectedLamps();
+    setContextMenu((prev) => (prev.isOpen ? { ...prev, isOpen: false } : prev));
+  };
+
+  const handleCutSelected = () => {
+    if (selectedLampIds.length === 0) {
+      return;
+    }
+    copySelectedLamps();
+    deleteLamps(selectedLampIds);
+    setContextMenu((prev) => (prev.isOpen ? { ...prev, isOpen: false } : prev));
+  };
+
+  const handlePasteSelected = () => {
+    if (clipboard.length === 0) {
+      return;
+    }
+    pasteClipboardLamps();
+  };
+
   return (
     <div
       ref={containerRef}
@@ -417,6 +509,30 @@ export const LayoutCanvas = () => {
             <button
               type="button"
               className="w-full px-3 py-2 text-left text-sm text-slate-200 hover:bg-slate-800 disabled:cursor-not-allowed disabled:text-slate-600 disabled:hover:bg-transparent"
+              onClick={handleCutSelected}
+              disabled={selectedLampIds.length === 0}
+            >
+              Cut
+            </button>
+            <button
+              type="button"
+              className="w-full border-t border-slate-800 px-3 py-2 text-left text-sm text-slate-200 hover:bg-slate-800 disabled:cursor-not-allowed disabled:text-slate-600 disabled:hover:bg-transparent"
+              onClick={handleCopySelected}
+              disabled={selectedLampIds.length === 0}
+            >
+              Copy
+            </button>
+            <button
+              type="button"
+              className="w-full border-t border-slate-800 px-3 py-2 text-left text-sm text-slate-200 hover:bg-slate-800 disabled:cursor-not-allowed disabled:text-slate-600 disabled:hover:bg-transparent"
+              onClick={handlePasteSelected}
+              disabled={clipboard.length === 0}
+            >
+              Paste
+            </button>
+            <button
+              type="button"
+              className="w-full border-t border-slate-800 px-3 py-2 text-left text-sm text-slate-200 hover:bg-slate-800 disabled:cursor-not-allowed disabled:text-slate-600 disabled:hover:bg-transparent"
               onClick={handleDeleteSelected}
               disabled={selectedLampIds.length === 0}
             >

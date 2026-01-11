@@ -7,6 +7,7 @@ type LayoutState = {
   rawXml: string | null;
   project: LayoutProject | null;
   selectedLampId: string | null;
+  exportFileHandle: FileSystemFileHandle | null;
   setFile: (filename: string, rawXml: string) => void;
   clearFile: () => void;
   createNewProject: () => void;
@@ -17,6 +18,7 @@ type LayoutState = {
   updateLampSize: (id: string, width: number, height: number) => void;
   updateLampColors: (id: string, onColor: RgbaColor, offColor: RgbaColor) => void;
   exportLay: () => string | null;
+  setExportFileHandle: (handle: FileSystemFileHandle | null) => void;
 };
 
 export const useLayoutStore = create<LayoutState>((set, get) => ({
@@ -24,21 +26,30 @@ export const useLayoutStore = create<LayoutState>((set, get) => ({
   rawXml: null,
   project: null,
   selectedLampId: null,
+  exportFileHandle: null,
   setFile: (filename, rawXml) =>
     set({
       filename,
       rawXml,
       project: parseLay(rawXml),
       selectedLampId: null,
+      exportFileHandle: null,
     }),
   clearFile: () =>
-    set({ filename: null, rawXml: null, project: null, selectedLampId: null }),
+    set({
+      filename: null,
+      rawXml: null,
+      project: null,
+      selectedLampId: null,
+      exportFileHandle: null,
+    }),
   createNewProject: () =>
     set({
       filename: "untitled.lay",
       rawXml: null,
       project: createEmptyProject(),
       selectedLampId: null,
+      exportFileHandle: null,
     }),
   addLamp: () => {
     const { project } = get();
@@ -116,4 +127,5 @@ export const useLayoutStore = create<LayoutState>((set, get) => ({
     }
     return serializeLay(project);
   },
+  setExportFileHandle: (handle) => set({ exportFileHandle: handle }),
 }));

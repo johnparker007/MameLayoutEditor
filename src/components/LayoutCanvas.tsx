@@ -49,6 +49,8 @@ export const LayoutCanvas = () => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [clipboard, setClipboard] = useState<Lamp[]>([]);
   const pasteCountRef = useRef(0);
+  const lastPointerRef = useRef<{ x: number; y: number } | null>(null);
+  const contextMenuPointRef = useRef<{ x: number; y: number } | null>(null);
   const selectionState = useRef<{
     startX: number;
     startY: number;
@@ -92,6 +94,16 @@ export const LayoutCanvas = () => {
     setSelectedLamps(deduped, primaryId ?? deduped[0] ?? null);
   };
 
+  const getCanvasPointFromMouseEvent = (event: MouseEvent<HTMLDivElement>) => {
+    const bounds = containerRef.current?.getBoundingClientRect();
+    const scrollLeft = containerRef.current?.scrollLeft ?? 0;
+    const scrollTop = containerRef.current?.scrollTop ?? 0;
+    return {
+      x: (bounds ? event.clientX - bounds.left : event.clientX) + scrollLeft,
+      y: (bounds ? event.clientY - bounds.top : event.clientY) + scrollTop,
+    };
+  };
+
   const isEditableTarget = (target: EventTarget | null) =>
     target instanceof HTMLElement &&
     (target.isContentEditable ||
@@ -114,19 +126,31 @@ export const LayoutCanvas = () => {
     pasteCountRef.current = 0;
   };
 
-  const pasteClipboardLamps = () => {
+  const pasteClipboardLamps = (target?: { x: number; y: number }) => {
     if (!project || clipboard.length === 0) {
       return;
     }
-    const offset = 16 * (pasteCountRef.current + 1);
-    pasteCountRef.current += 1;
+    let offsetX = 0;
+    let offsetY = 0;
+    if (target) {
+      const minX = Math.min(...clipboard.map((lamp) => lamp.x));
+      const minY = Math.min(...clipboard.map((lamp) => lamp.y));
+      offsetX = target.x - minX;
+      offsetY = target.y - minY;
+      pasteCountRef.current = 0;
+    } else {
+      const offset = 16 * (pasteCountRef.current + 1);
+      pasteCountRef.current += 1;
+      offsetX = offset;
+      offsetY = offset;
+    }
     const nonce = `${Date.now()}-${Math.round(Math.random() * 1_000_000)}`;
     const nextLamps = clipboard.map((lamp, index) => ({
       ...lamp,
       id: `lamp-${nonce}-${index}`,
       name: `${lamp.name} Copy`,
-      x: lamp.x + offset,
-      y: lamp.y + offset,
+      x: lamp.x + offsetX,
+      y: lamp.y + offsetY,
     }));
     addLamps(nextLamps);
     setContextMenu((prev) => (prev.isOpen ? { ...prev, isOpen: false } : prev));
@@ -175,7 +199,7 @@ export const LayoutCanvas = () => {
           return;
         }
         event.preventDefault();
-        pasteClipboardLamps();
+        pasteClipboardLamps(lastPointerRef.current ?? undefined);
       }
     };
     window.addEventListener("keydown", handleKeyDown);
@@ -199,6 +223,7 @@ export const LayoutCanvas = () => {
       return;
     }
     event.stopPropagation();
+    lastPointerRef.current = getCanvasPoint(event);
     const isAlreadySelected = selectedLampIds.includes(lamp.id);
     let nextSelection = selectedLampIds;
     let primaryId: string | null = lamp.id;
@@ -244,6 +269,7 @@ export const LayoutCanvas = () => {
   };
 
   const handlePointerMove = (event: PointerEvent<HTMLDivElement>) => {
+    lastPointerRef.current = getCanvasPoint(event);
     if (!dragState.current) {
       if (!selectionState.current) {
         return;
@@ -322,9 +348,9 @@ export const LayoutCanvas = () => {
         updateSelection(selectedLampIds, lampId);
       }
     }
-    const bounds = containerRef.current?.getBoundingClientRect();
-    const x = bounds ? event.clientX - bounds.left : event.clientX;
-    const y = bounds ? event.clientY - bounds.top : event.clientY;
+    const { x, y } = getCanvasPointFromMouseEvent(event);
+    contextMenuPointRef.current = { x, y };
+    lastPointerRef.current = { x, y };
     setContextMenu({ isOpen: true, x, y });
   };
 
@@ -337,6 +363,7 @@ export const LayoutCanvas = () => {
       updateSelection([]);
     }
     const { x, y } = getCanvasPoint(event);
+    lastPointerRef.current = { x, y };
     selectionState.current = {
       startX: x,
       startY: y,
@@ -350,7 +377,7 @@ export const LayoutCanvas = () => {
   };
 
   const handleAddLamp = () => {
-    addLamp();
+    addLamp(contextMenuPointRef.current ?? undefined);
     setContextMenu((prev) => (prev.isOpen ? { ...prev, isOpen: false } : prev));
   };
 
@@ -399,7 +426,7 @@ export const LayoutCanvas = () => {
     if (clipboard.length === 0) {
       return;
     }
-    pasteClipboardLamps();
+    pasteClipboardLamps(contextMenuPointRef.current ?? undefined);
   };
 
   return (

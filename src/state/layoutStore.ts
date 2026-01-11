@@ -12,7 +12,7 @@ type LayoutState = {
   setFile: (filename: string, rawXml: string) => void;
   clearFile: () => void;
   createNewProject: () => void;
-  addLamp: () => void;
+  addLamp: (position?: { x: number; y: number }) => void;
   addLamps: (lamps: Lamp[]) => void;
   setSelectedLamps: (ids: string[], primaryId?: string | null) => void;
   deleteLamps: (ids: string[]) => void;
@@ -60,10 +60,11 @@ export const useLayoutStore = create<LayoutState>((set, get) => ({
       primarySelectedLampId: null,
       exportFileHandle: null,
     }),
-  addLamp: () => {
+  addLamp: (position) => {
     const { project } = get();
     const nextProject = project ?? createEmptyProject();
-    const lamp = createLamp(nextProject.lamps.length);
+    const baseLamp = createLamp(nextProject.lamps.length);
+    const lamp = position ? { ...baseLamp, x: position.x, y: position.y } : baseLamp;
     set({
       project: {
         ...nextProject,

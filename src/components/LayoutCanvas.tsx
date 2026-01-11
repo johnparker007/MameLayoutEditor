@@ -111,18 +111,19 @@ export const LayoutCanvas = () => {
       target.tagName === "TEXTAREA" ||
       target.tagName === "SELECT");
 
+  const cloneLamp = (lamp: Lamp): Lamp => ({
+    ...lamp,
+    shape: lamp.shape,
+    onColor: { ...lamp.onColor },
+    offColor: { ...lamp.offColor },
+  });
+
   const copySelectedLamps = () => {
     if (!project || selectedLampIds.length === 0) {
       return;
     }
     const selected = project.lamps.filter((lamp) => selectedLampIds.includes(lamp.id));
-    setClipboard(
-      selected.map((lamp) => ({
-        ...lamp,
-        onColor: { ...lamp.onColor },
-        offColor: { ...lamp.offColor },
-      }))
-    );
+    setClipboard(selected.map((lamp) => cloneLamp(lamp)));
     pasteCountRef.current = 0;
   };
 
@@ -146,7 +147,7 @@ export const LayoutCanvas = () => {
     }
     const nonce = `${Date.now()}-${Math.round(Math.random() * 1_000_000)}`;
     const nextLamps = clipboard.map((lamp, index) => ({
-      ...lamp,
+      ...cloneLamp(lamp),
       id: `lamp-${nonce}-${index}`,
       name: `${lamp.name} Copy`,
       x: lamp.x + offsetX,

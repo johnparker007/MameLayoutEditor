@@ -22,6 +22,8 @@ export const LayoutCanvas = () => {
     selectedLampId,
     selectLamp,
     addLamp,
+    bringLampToFront,
+    sendLampToBack,
     updateLampPosition,
     updateLampSize,
   } = useLayoutStore((state) => ({
@@ -29,6 +31,8 @@ export const LayoutCanvas = () => {
     selectedLampId: state.selectedLampId,
     selectLamp: state.selectLamp,
     addLamp: state.addLamp,
+    bringLampToFront: state.bringLampToFront,
+    sendLampToBack: state.sendLampToBack,
     updateLampPosition: state.updateLampPosition,
     updateLampSize: state.updateLampSize,
   }));
@@ -129,6 +133,22 @@ export const LayoutCanvas = () => {
     setContextMenu((prev) => (prev.isOpen ? { ...prev, isOpen: false } : prev));
   };
 
+  const handleBringToFront = () => {
+    if (!selectedLampId) {
+      return;
+    }
+    bringLampToFront(selectedLampId);
+    setContextMenu((prev) => (prev.isOpen ? { ...prev, isOpen: false } : prev));
+  };
+
+  const handleSendToBack = () => {
+    if (!selectedLampId) {
+      return;
+    }
+    sendLampToBack(selectedLampId);
+    setContextMenu((prev) => (prev.isOpen ? { ...prev, isOpen: false } : prev));
+  };
+
   return (
     <div
       ref={containerRef}
@@ -199,6 +219,27 @@ export const LayoutCanvas = () => {
               onClick={handleAddLamp}
             >
               Lamp
+            </button>
+          </div>
+          <div className="mt-2 px-2 py-1 text-xs font-semibold uppercase tracking-wide text-slate-400">
+            Order
+          </div>
+          <div className="ml-2 rounded-md border border-slate-800 bg-slate-950">
+            <button
+              type="button"
+              className="w-full px-3 py-2 text-left text-sm text-slate-200 hover:bg-slate-800 disabled:cursor-not-allowed disabled:text-slate-600 disabled:hover:bg-transparent"
+              onClick={handleBringToFront}
+              disabled={!selectedLampId}
+            >
+              Bring To Front
+            </button>
+            <button
+              type="button"
+              className="w-full border-t border-slate-800 px-3 py-2 text-left text-sm text-slate-200 hover:bg-slate-800 disabled:cursor-not-allowed disabled:text-slate-600 disabled:hover:bg-transparent"
+              onClick={handleSendToBack}
+              disabled={!selectedLampId}
+            >
+              Send To Back
             </button>
           </div>
         </div>

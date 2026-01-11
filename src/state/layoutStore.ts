@@ -13,6 +13,8 @@ type LayoutState = {
   createNewProject: () => void;
   addLamp: () => void;
   selectLamp: (id: string | null) => void;
+  bringLampToFront: (id: string) => void;
+  sendLampToBack: (id: string) => void;
   updateLamp: (id: string, updates: Partial<Lamp>) => void;
   updateLampPosition: (id: string, x: number, y: number) => void;
   updateLampSize: (id: string, width: number, height: number) => void;
@@ -64,6 +66,44 @@ export const useLayoutStore = create<LayoutState>((set, get) => ({
     });
   },
   selectLamp: (id) => set({ selectedLampId: id }),
+  bringLampToFront: (id) => {
+    const { project } = get();
+    if (!project) {
+      return;
+    }
+    const index = project.lamps.findIndex((lamp) => lamp.id === id);
+    if (index === -1) {
+      return;
+    }
+    const reordered = [...project.lamps];
+    const [lamp] = reordered.splice(index, 1);
+    reordered.push(lamp);
+    set({
+      project: {
+        ...project,
+        lamps: reordered,
+      },
+    });
+  },
+  sendLampToBack: (id) => {
+    const { project } = get();
+    if (!project) {
+      return;
+    }
+    const index = project.lamps.findIndex((lamp) => lamp.id === id);
+    if (index === -1) {
+      return;
+    }
+    const reordered = [...project.lamps];
+    const [lamp] = reordered.splice(index, 1);
+    reordered.unshift(lamp);
+    set({
+      project: {
+        ...project,
+        lamps: reordered,
+      },
+    });
+  },
   updateLamp: (id, updates) => {
     const { project } = get();
     if (!project) {

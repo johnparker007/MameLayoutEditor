@@ -6,6 +6,7 @@ export type RgbaColor = {
 export type Lamp = {
   id: string;
   name: string;
+  shape: "rectangle" | "disc";
   x: number;
   y: number;
   width: number;

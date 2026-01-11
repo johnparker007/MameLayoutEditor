@@ -327,10 +327,12 @@ export const LayoutCanvas = () => {
         <div className="absolute inset-0 bg-[linear-gradient(#0f172a_1px,transparent_1px),linear-gradient(90deg,#0f172a_1px,transparent_1px)] bg-[size:32px_32px]" />
         {project.lamps.map((lamp) => {
           const isSelected = selectedLampIds.includes(lamp.id);
+          const shapeClassName =
+            lamp.shape === "disc" ? "rounded-full" : "rounded-none";
           return (
             <div
               key={lamp.id}
-              className={`absolute flex select-none items-center justify-center rounded-full border ${
+              className={`absolute flex select-none items-center justify-center border ${shapeClassName} ${
                 isSelected
                   ? "border-emerald-400 shadow-[0_0_0_2px_rgba(16,185,129,0.3)]"
                   : "border-slate-700"

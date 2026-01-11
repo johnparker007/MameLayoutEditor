@@ -147,7 +147,7 @@ export const Sidebar = () => {
         </button>
         <button
           type="button"
-          onClick={addLamp}
+          onClick={() => addLamp()}
           disabled={!project}
           className="w-full rounded-md border border-slate-700 px-3 py-2 text-sm font-semibold text-slate-200 hover:border-slate-500 disabled:cursor-not-allowed disabled:opacity-50"
         >

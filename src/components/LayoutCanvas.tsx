@@ -327,10 +327,11 @@ export const LayoutCanvas = () => {
         <div className="absolute inset-0 bg-[linear-gradient(#0f172a_1px,transparent_1px),linear-gradient(90deg,#0f172a_1px,transparent_1px)] bg-[size:32px_32px]" />
         {project.lamps.map((lamp) => {
           const isSelected = selectedLampIds.includes(lamp.id);
+          const borderRadius = lamp.shape === "disc" ? "50%" : "0";
           return (
             <div
               key={lamp.id}
-              className={`absolute flex select-none items-center justify-center rounded-full border ${
+              className={`absolute flex select-none items-center justify-center border ${
                 isSelected
                   ? "border-emerald-400 shadow-[0_0_0_2px_rgba(16,185,129,0.3)]"
                   : "border-slate-700"
@@ -341,6 +342,7 @@ export const LayoutCanvas = () => {
                 width: lamp.width,
                 height: lamp.height,
                 background: lamp.offColor.hex,
+                borderRadius,
               }}
               onPointerDown={(event) => {
                 handleLampPointerDown(event, lamp, "move");

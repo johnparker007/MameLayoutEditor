@@ -14,6 +14,7 @@ export const createEmptyProject = (): LayoutProject => ({
 export const createLamp = (index: number): LayoutProject["lamps"][number] => ({
   id: `lamp-${Date.now()}-${index}`,
   name: `Lamp ${index + 1}`,
+  shape: "rectangle",
   x: 80 + index * 24,
   y: 80 + index * 24,
   width: 60,

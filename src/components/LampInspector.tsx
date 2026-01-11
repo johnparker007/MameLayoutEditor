@@ -113,6 +113,23 @@ export const LampInspector = () => {
       </div>
       <div className="space-y-2">
         <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+          Shape
+        </label>
+        <select
+          value={selectedLamp.shape}
+          onChange={(event) =>
+            updateLamp(selectedLamp.id, {
+              shape: event.target.value as "rectangle" | "disc",
+            })
+          }
+          className="w-full rounded-md border border-slate-700 bg-slate-950 px-2 py-1 text-sm text-slate-200"
+        >
+          <option value="rectangle">Rectangle</option>
+          <option value="disc">Disc</option>
+        </select>
+      </div>
+      <div className="space-y-2">
+        <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
           Lamp colors
         </label>
         <div className="flex items-center gap-3">

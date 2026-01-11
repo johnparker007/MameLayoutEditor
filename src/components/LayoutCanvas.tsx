@@ -73,14 +73,6 @@ export const LayoutCanvas = () => {
     return map;
   }, [project]);
 
-  if (!project) {
-    return (
-      <div className="flex h-full items-center justify-center rounded-md border border-dashed border-slate-700 text-sm text-slate-500">
-        Create a new project or open a .lay file to start.
-      </div>
-    );
-  }
-
   const getCanvasPoint = (event: PointerEvent<HTMLDivElement>) => {
     const bounds = containerRef.current?.getBoundingClientRect();
     const scrollLeft = containerRef.current?.scrollLeft ?? 0;
@@ -121,6 +113,14 @@ export const LayoutCanvas = () => {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [deleteLamps, selectedLampIds]);
+
+  if (!project) {
+    return (
+      <div className="flex h-full items-center justify-center rounded-md border border-dashed border-slate-700 text-sm text-slate-500">
+        Create a new project or open a .lay file to start.
+      </div>
+    );
+  }
 
   const handleLampPointerDown = (
     event: PointerEvent<HTMLDivElement>,

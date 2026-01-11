@@ -12,7 +12,7 @@ export const LampInspector = () => {
     updateLampColors,
   } = useLayoutStore((state) => ({
     project: state.project,
-    selectedLampId: state.selectedLampId,
+    selectedLampId: state.primarySelectedLampId,
     updateLamp: state.updateLamp,
     updateLampColors: state.updateLampColors,
   }));

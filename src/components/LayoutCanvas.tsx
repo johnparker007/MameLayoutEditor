@@ -149,7 +149,7 @@ export const LayoutCanvas = () => {
           return (
             <div
               key={lamp.id}
-              className={`absolute flex items-center justify-center rounded-full border ${
+              className={`absolute flex select-none items-center justify-center rounded-full border ${
                 isSelected
                   ? "border-emerald-400 shadow-[0_0_0_2px_rgba(16,185,129,0.3)]"
                   : "border-slate-700"

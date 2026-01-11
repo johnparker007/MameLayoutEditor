@@ -14,6 +14,7 @@ type LayoutState = {
   createNewProject: () => void;
   addLamp: () => void;
   setSelectedLamps: (ids: string[], primaryId?: string | null) => void;
+  deleteLamps: (ids: string[]) => void;
   bringLampToFront: (id: string) => void;
   sendLampToBack: (id: string) => void;
   updateLamp: (id: string, updates: Partial<Lamp>) => void;
@@ -76,6 +77,23 @@ export const useLayoutStore = create<LayoutState>((set, get) => ({
       selectedLampIds: ids,
       primarySelectedLampId: primaryId,
     }),
+  deleteLamps: (ids) => {
+    const { project, selectedLampIds } = get();
+    if (!project || ids.length === 0) {
+      return;
+    }
+    const idsToDelete = new Set(ids);
+    const remainingLamps = project.lamps.filter((lamp) => !idsToDelete.has(lamp.id));
+    const remainingSelection = selectedLampIds.filter((id) => !idsToDelete.has(id));
+    set({
+      project: {
+        ...project,
+        lamps: remainingLamps,
+      },
+      selectedLampIds: remainingSelection,
+      primarySelectedLampId: remainingSelection[0] ?? null,
+    });
+  },
   bringLampToFront: (id) => {
     const { project } = get();
     if (!project) {
